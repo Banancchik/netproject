@@ -4,22 +4,6 @@ import java.net.*;
 import java.util.Scanner;
 
 class Client {
-    public static byte[] ReadFromServer(InputStream in, byte[] data){
-        try {
-            int totalBytesRcvd = 0;
-            int bytesRcvd;
-            while (totalBytesRcvd < data.length) {
-                if ((bytesRcvd = in.read(data, totalBytesRcvd, data.length - totalBytesRcvd)) == -1)
-                    throw new SocketException("Connection closed prematurely");
-                totalBytesRcvd += bytesRcvd;
-            }
-        }
-        catch (Exception ex){
-            System.out.println("Server exception: " + ex.getMessage());
-            ex.printStackTrace();
-        }
-        return data;
-    }
     public static void main(String[] args)
     {
         String server = "62.80.235.213";
@@ -33,9 +17,7 @@ class Client {
 
                 System.out.println("Message for the server: ");
                 String message = input.nextLine();
-                //byte[] data = message.getBytes();
                 writer.println(message);
-                //ReadFromServer(in, data);
                 System.out.println(reader.readLine());
             }
         } catch (UnknownHostException ex) {
