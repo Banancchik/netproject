@@ -12,8 +12,12 @@ import java.util.logging.Logger;
 class Vote_view extends Thread{
     private int votes;
 
-    Vote_view() {
+    private Socket clientsocket;
+
+    Vote_view(Socket clientS) {
         this.votes = 0;
+        this.clientsocket = clientS;
+
     }
 
     synchronized int getVotes(){
@@ -38,6 +42,8 @@ class Vote_view extends Thread{
     public void run() {
         System.out.println("hekllo");
         System.out.println("Current thread: " + Thread.currentThread().getName());
+        String clientSocketIP = this.clientsocket.getInetAddress().toString();
+        System.out.println(clientSocketIP);
     }
 }
 
@@ -57,7 +63,7 @@ public class Main {
             Executor service = Executors.newCachedThreadPool();
             while (true) {
                 Socket clientSock = servSock.accept();
-                service.execute(new Vote_view());
+                service.execute(new Vote_view(clientSock));
             }
         } catch (IOException ex) {
             System.out.println("Server exception: " + ex.getMessage());
