@@ -1,7 +1,8 @@
 package org.example;
-import java.io.IOException;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Objects;
 import java.util.Scanner;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -40,10 +41,30 @@ class Vote_view extends Thread{
     }
 
     public void run() {
-        System.out.println("hekllo");
         System.out.println("Current thread: " + Thread.currentThread().getName());
         String clientSocketIP = this.clientsocket.getInetAddress().toString();
         System.out.println(clientSocketIP);
+        try {
+            while (true) {
+                InputStream in = this.clientsocket.getInputStream();
+                OutputStream out = clientsocket.getOutputStream();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+                PrintWriter writer = new PrintWriter(out, true);
+                String message = reader.readLine();
+                if (Objects.equals(message, "EXIT")) {
+                    in.close();
+                    out.close();
+                    reader.close();
+                    writer.close();
+                    clientsocket.close();
+                    break;
+                }
+                writer.println(message);
+            }
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
 
@@ -64,6 +85,7 @@ public class Main {
             while (true) {
                 Socket clientSock = servSock.accept();
                 service.execute(new Vote_view(clientSock));
+
             }
         } catch (IOException ex) {
             System.out.println("Server exception: " + ex.getMessage());
