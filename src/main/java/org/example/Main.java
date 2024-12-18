@@ -11,77 +11,78 @@ import java.sql.*;
 
 
 class Vote_system {
-    private int votes;
-
-    protected synchronized int getVotes(){
-        return this.votes;
+    Vote_system(Connection database) {
+        this.database = database;
     }
 
-    protected synchronized String deposit(int amount) {
-        this.votes += amount;
-        return "successfully deposited " + amount + " to the votes.";
+    protected Connection database;
+
+    protected synchronized String vote(Statement st, String message, String[] batch) {
+        try {
+            String candidate = batch[Integer.parseInt(message) - 1];
+            String[] name_surname = candidate.split(" ");
+            ResultSet rs = st.executeQuery("UPDATE candidates SET votes = candidates.votes + 1 WHERE surname = '" + name_surname[1] + "'");
+            return "Success";
+        }
+        catch (Exception e) {
+            return e.getMessage();
+        }
     }
 
-    private synchronized String withdrawal(int amount) {
-        if (votes >= amount) {
-            votes -= amount;
+    protected synchronized String[] display(Statement st, PrintWriter writer) {
+        try {
+            ResultSet rs = st.executeQuery("SELECT * FROM candidates WHERE name = 'John'");
+
+            String[] batch = new String[6];
+
+            int i = 0;
+            while (rs.next()) {
+                batch[i] = rs.getString("name")+" "+rs.getString("surname") + "   Score: " + rs.getString("votes");
+                writer.println(batch[i]);
+                i++;
+            }
+            return batch;
         }
-        else{
-            return "Insufficient votes for a withdrawal of " + amount + " from the candidate.";
+        catch (SQLException e) {
+            System.out.println(e.getMessage());
+            return null;
         }
-        return "successfully withdrawed " + amount + " votes from the candidate.";
     }
 }
 
+
+
 class Thread_handle extends Thread{
 
-    Thread_handle(Socket clientS, Vote_system system, Connection database) {
+    Thread_handle(Socket clientS, Vote_system system) {
         this.clientsocket = clientS;
         this.system = system;
-        this.database = database;
     }
 
     private Socket clientsocket;
     private Vote_system system;
-    private Connection database;
 
     public void run() {
         System.out.println("Current thread: " + Thread.currentThread().getName());
         String clientSocketIP = this.clientsocket.getInetAddress().toString();
         System.out.println(clientSocketIP);
         try {
+            Statement st = system.database.createStatement();
+            InputStream in = this.clientsocket.getInputStream();
+            OutputStream out = clientsocket.getOutputStream();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+            PrintWriter writer = new PrintWriter(out, true);
+            String[] batch = system.display(st, writer);
+
             while (true) {
-
-                Statement st = database.createStatement();
-
-                InputStream in = this.clientsocket.getInputStream();
-                OutputStream out = clientsocket.getOutputStream();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-                PrintWriter writer = new PrintWriter(out, true);
-
-                ResultSet rs = st.executeQuery("SELECT * FROM candidates WHERE name = 'John'");
-
-                String[] batch = new String[6];
-
-                int i = 0;
-                while (rs.next()) {
-                    batch[i] = rs.getString("name")+" "+rs.getString("surname") + "   Score: " + rs.getString("votes");
-                    writer.println(batch[i]);
-                    i++;
-                }
-
                 String message = reader.readLine();
 
                 if (message.matches("[123456]")) {
-                    String candidate = batch[Integer.parseInt(message)-1];
-                    String [] name_surname = candidate.split(" ");
-                    rs = st.executeQuery("UPDATE candidates SET votes = candidates.votes + 1 WHERE surname = '" + name_surname[1] + "'");
-                    writer.println(this.system.deposit(1));
+                    writer.println(system.vote(st, message, batch));
                 }
 
                 else if (Objects.equals(message, "DISPLAY")) {
-                    writer.println(this.system.getVotes());
-
+                    system.display(st, writer);
                 }
                 else if (Objects.equals(message, "EXIT")) {
                     in.close();
@@ -91,9 +92,9 @@ class Thread_handle extends Thread{
                     clientsocket.close();
                     break;
                 }
-                else {
-                    writer.println(message);
-                }
+//                else {
+//                    writer.println(message);
+//                }
             }
         }
         catch (IOException e) {
@@ -108,7 +109,6 @@ class Thread_handle extends Thread{
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        Vote_system system = new Vote_system();
 
         Connection db = null;
 
@@ -127,7 +127,7 @@ public class Main {
             System.out.println(e.getMessage());
         }
 
-
+        Vote_system system = new Vote_system(db);
 
         System.out.println("Server host port was not specified. Please enter the desired port: ");
         int echoServPort = input.nextInt();
@@ -139,10 +139,11 @@ public class Main {
             Executor service = Executors.newCachedThreadPool();
             while (true) {
                 Socket clientSock = servSock.accept();
-                service.execute(new Thread_handle(clientSock, system, db));
-
+                service.execute(new Thread_handle(clientSock, system));
             }
-        } catch (IOException ex) {
+
+        }
+        catch (IOException ex) {
             System.out.println("Server exception: " + ex.getMessage());
             ex.printStackTrace();
         }

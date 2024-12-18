@@ -1,6 +1,7 @@
 package org.example;
 import java.io.*;
 import java.net.*;
+import java.util.Objects;
 import java.util.Scanner;
 
 class Client {
@@ -8,21 +9,30 @@ class Client {
     {
         String server = "62.80.235.213";
         int servPort = 1234;
+
         try (Socket socket = new Socket(server, servPort); Scanner input = new Scanner(System.in)) {
+            InputStream in = socket.getInputStream();
+            OutputStream out = socket.getOutputStream();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+            PrintWriter writer = new PrintWriter(out, true);
+
+            for (int i = 0; i < 6; i++) {
+                System.out.println(reader.readLine());
+            }
+
             while (true){
-                InputStream in = socket.getInputStream();
-                OutputStream out = socket.getOutputStream();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-                PrintWriter writer = new PrintWriter(out, true);
-
-                for (int i = 0; i < 6; i++) {
-                    System.out.println(reader.readLine());
-                }
-
                 System.out.println("Message for the server: ");
                 String message = input.nextLine();
                 writer.println(message);
-                System.out.println(reader.readLine());
+
+                if (Objects.equals(message, "DISPLAY")){
+                    for (int i = 0; i < 6; i++) {
+                        System.out.println(reader.readLine());
+                    }
+                }
+                else {
+                    System.out.println(reader.readLine());
+                }
             }
         } catch (UnknownHostException ex) {
             System.out.println("Server not found: " + ex.getMessage());
