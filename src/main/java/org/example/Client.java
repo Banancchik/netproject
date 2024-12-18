@@ -15,6 +15,10 @@ class Client {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(in));
                 PrintWriter writer = new PrintWriter(out, true);
 
+                for (int i = 0; i < 6; i++) {
+                    System.out.println(reader.readLine());
+                }
+
                 System.out.println("Message for the server: ");
                 String message = input.nextLine();
                 writer.println(message);
