@@ -31,7 +31,7 @@ class Vote_system {
 
     protected synchronized String[] display(Statement st, PrintWriter writer) {
         try {
-            ResultSet rs = st.executeQuery("SELECT * FROM candidates WHERE name = 'John'");
+            ResultSet rs = st.executeQuery("SELECT * FROM candidates WHERE name = 'John' ORDER BY surname ASC");
 
             String[] batch = new String[6];
 
@@ -132,9 +132,9 @@ public class Main {
         System.out.println("Server host port was not specified. Please enter the desired port: ");
         int echoServPort = input.nextInt();
         input.nextLine();
-        System.out.println("Server started!");
 
         try (ServerSocket servSock = new ServerSocket(echoServPort)) {
+            System.out.println("Server started!");
             Logger logger = Logger.getLogger("practical");
             Executor service = Executors.newCachedThreadPool();
             while (true) {
