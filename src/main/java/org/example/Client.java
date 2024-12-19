@@ -26,10 +26,10 @@ class Client {
 
             while (true){
                 System.out.println("Message for the server: ");
-                message = input.nextLine();
+                message = input.nextLine(); //TODO просили голосовать используя комманду VOTE и цифру
                 writer.println(message);
 
-                if (Objects.equals(message, "DISPLAY")){
+                if (Objects.equals(message, "INFO")){
                     for (int i = 0; i < 6; i++) {
                         System.out.println(reader.readLine());
                     }

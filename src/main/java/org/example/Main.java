@@ -111,12 +111,12 @@ class Thread_handle extends Thread{
 
 
 
-            String[] batch = system.display(st, writer);
+            String[] batch = system.display(st, writer);//TODO Список просили сохранять в list.txt локально на устройстве, у нас есть база, но можно и локально на всякий
 
             while (true) {
                 message = reader.readLine();
 
-                if (message.matches("[123456]")) {
+                if (message.matches("[123456]")) { //TODO Голосовать используя комманду VOTE и цифру
                     writer.println(system.vote(st, message, batch, user_data, clientSocketIP));
                 }
 
