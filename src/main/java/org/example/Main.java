@@ -17,11 +17,23 @@ class Vote_system {
 
     protected Connection database;
 
-    protected synchronized String vote(Statement st, String message, String[] batch) {
+    protected synchronized String vote(Statement st, String message, String[] batch, String[] user_data, String client_ip) {
         try {
+            System.out.println("query0");
+            ResultSet rs = st.executeQuery("SELECT 1 FROM account WHERE (email = '"+ user_data[2] +"' AND ip = '" + client_ip + "' AND have_voted = true)");
+            System.out.println("query0end");
+            if(rs.next()) {
+                return "Error, you already voted";
+            }
+
             String candidate = batch[Integer.parseInt(message) - 1];
             String[] name_surname = candidate.split(" ");
-            ResultSet rs = st.executeQuery("UPDATE candidates SET votes = candidates.votes + 1 WHERE surname = '" + name_surname[1] + "'");
+            System.out.println("query1");
+            st.executeUpdate("UPDATE candidates SET votes = candidates.votes + 1 WHERE surname = '" + name_surname[1] + "'");
+            System.out.println("query1end");
+            System.out.println("query2");
+            st.executeUpdate("UPDATE account SET have_voted = 'true' WHERE (email = '"+ user_data[2] +"' AND ip = '" + client_ip + "')");
+            System.out.println("query2end");
             return "Success";
         }
         catch (Exception e) {
@@ -48,6 +60,25 @@ class Vote_system {
             return null;
         }
     }
+
+    protected synchronized void login(Statement st, String[] user_data, String client_ip) {
+        try {
+            ResultSet rs = st.executeQuery("SELECT 1 FROM account WHERE ip = '" + client_ip + "'");
+            if (rs.next()) {
+                rs = st.executeQuery("SELECT 1 FROM account WHERE email = '" + user_data[2] + "'");
+                if (rs.next()) {
+                    return;
+                }
+            }
+
+            st.executeQuery("INSERT INTO account(name, surname, email, ip) VALUES('" + user_data[0] + "','" + user_data[1] + "','" + user_data[2] + "','" + client_ip + "')");
+            System.out.println("Success");
+        }
+        catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
 }
 
 
@@ -64,7 +95,7 @@ class Thread_handle extends Thread{
 
     public void run() {
         System.out.println("Current thread: " + Thread.currentThread().getName());
-        String clientSocketIP = this.clientsocket.getInetAddress().toString();
+        String clientSocketIP = this.clientsocket.getInetAddress().toString().replace("/", "");
         System.out.println(clientSocketIP);
         try {
             Statement st = system.database.createStatement();
@@ -72,13 +103,21 @@ class Thread_handle extends Thread{
             OutputStream out = clientsocket.getOutputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(in));
             PrintWriter writer = new PrintWriter(out, true);
+
+            writer.println("Enter your name, surname and e-mail:");
+            String message = reader.readLine();
+            String[] user_data = message.split(" ");
+            system.login(st, user_data, clientSocketIP);
+
+
+
             String[] batch = system.display(st, writer);
 
             while (true) {
-                String message = reader.readLine();
+                message = reader.readLine();
 
                 if (message.matches("[123456]")) {
-                    writer.println(system.vote(st, message, batch));
+                    writer.println(system.vote(st, message, batch, user_data, clientSocketIP));
                 }
 
                 else if (Objects.equals(message, "DISPLAY")) {
