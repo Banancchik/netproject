@@ -72,6 +72,20 @@ class Vote_system {
             return "Error. " + e.getMessage();
         }
     }
+
+    protected synchronized void export(Statement st) {
+        try (FileWriter myWriter = new FileWriter("log.txt")){
+            ResultSet rs = st.executeQuery("SELECT name, surname, votes FROM candidates ORDER BY surname ASC");
+            int id = 1;
+            while (rs.next()) {
+                myWriter.write(id + ".\t" + rs.getString("name") + " " + rs.getString("surname") + "\t\t Score: " + rs.getString("votes") + "\n");
+                id++;
+            }
+        }
+        catch (Exception e){
+            System.out.println(e.getMessage());
+        }
+    }
 }
 
 
@@ -121,12 +135,13 @@ class Thread_handle extends Thread{
                     system.display(st, writer);
                 }
                 else if (Objects.equals(message, "EXIT")) {
-                    in.close();
-                    out.close();
-                    reader.close();
-                    writer.close();
-                    clientsocket.close();
-                    break;
+                    system.export(st);
+//                    in.close();
+//                    out.close();
+//                    reader.close();
+//                    writer.close();
+//                    clientsocket.close();
+//                    break;
                 }
                 else {
                     writer.println("Invalid message: "+message);
