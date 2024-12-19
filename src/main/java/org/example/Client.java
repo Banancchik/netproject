@@ -27,7 +27,7 @@ class Client {
             }
 
             while (true){
-                System.out.println("Message for the server: ");
+                System.out.println("\nEnter command for the server: ");
                 message = input.nextLine();
                 writer.println(message);
 

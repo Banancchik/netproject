@@ -60,12 +60,9 @@ class Vote_system {
 
     protected synchronized String login(Statement st, String[] user_data, String client_ip) {
         try {
-            ResultSet rs = st.executeQuery("SELECT 1 FROM account WHERE ip = '" + client_ip + "'");
+            ResultSet rs = st.executeQuery("SELECT 1 FROM account WHERE email = '" + user_data[2] + "'");
             if (rs.next()) {
-                rs = st.executeQuery("SELECT 1 FROM account WHERE email = '" + user_data[2] + "'");
-                if (rs.next()) {
-                    return "Login successful. Welcome back, " + user_data[0] + " " + user_data[1];
-                }
+                return "Login successful. Welcome back, " + user_data[0] + " " + user_data[1];
             }
 
             st.executeUpdate("INSERT INTO account(name, surname, email, ip) VALUES('" + user_data[0] + "','" + user_data[1] + "','" + user_data[2] + "','" + client_ip + "')");
@@ -75,9 +72,7 @@ class Vote_system {
             return "Error. " + e.getMessage();
         }
     }
-
 }
-
 
 
 class Thread_handle extends Thread{
@@ -107,8 +102,6 @@ class Thread_handle extends Thread{
             writer.println(system.login(st, user_data, clientSocketIP));
 
 
-
-
             String[] batch = system.display(st, writer);//TODO Список просили сохранять в list.txt локально на устройстве, у нас есть база, но можно и локально на всякий
 
             while (true) {
@@ -117,7 +110,7 @@ class Thread_handle extends Thread{
                 if (message.startsWith("VOTE")) {
                     int vote_no = Integer.parseInt(message.replaceAll("[^\\d]", ""));
                     if (vote_no > 100 || vote_no < 1) {
-                        writer.println("Invalid vote number");
+                        writer.println("Error. Invalid vote number.");
                     }
                     else {
                         writer.println(system.vote(st, vote_no, batch, user_data, clientSocketIP));
@@ -135,6 +128,9 @@ class Thread_handle extends Thread{
                     clientsocket.close();
                     break;
                 }
+                else {
+                    writer.println("Invalid message: "+message);
+                }
             }
         }
         catch (IOException e) {
@@ -151,7 +147,6 @@ public class SerVote {
     public static void main(String[] args) throws IOException {
 
         Connection db = null;
-
         Scanner input = new Scanner(System.in);
         System.out.println("Provide database user account: ");
         String account = input.nextLine();
@@ -174,7 +169,6 @@ public class SerVote {
 
         try (ServerSocket servSock = new ServerSocket(echoServPort)) {
             System.out.println("Server started!");
-            Logger logger = Logger.getLogger("practical");
             Executor service = Executors.newCachedThreadPool();
             while (true) {
                 Socket clientSock = servSock.accept();
