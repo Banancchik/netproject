@@ -36,6 +36,11 @@ class Client {
                         System.out.println(reader.readLine());
                     }
                 }
+                else if (Objects.equals(message, "EXIT")){
+                    System.out.println("Connection closed.");
+                    socket.close();
+                    break;
+                }
                 else {
                     System.out.println(reader.readLine());
                 }

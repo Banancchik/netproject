@@ -7,6 +7,7 @@ import java.util.Scanner;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
+import java.lang.*;
 import java.sql.*;
 
 
@@ -72,20 +73,6 @@ class Vote_system {
             return "Error. " + e.getMessage();
         }
     }
-
-    protected synchronized void export(Statement st) {
-        try (FileWriter myWriter = new FileWriter("log.txt")){
-            ResultSet rs = st.executeQuery("SELECT name, surname, votes FROM candidates ORDER BY surname ASC");
-            int id = 1;
-            while (rs.next()) {
-                myWriter.write(id + ".\t" + rs.getString("name") + " " + rs.getString("surname") + "\t\t Score: " + rs.getString("votes") + "\n");
-                id++;
-            }
-        }
-        catch (Exception e){
-            System.out.println(e.getMessage());
-        }
-    }
 }
 
 
@@ -135,13 +122,12 @@ class Thread_handle extends Thread{
                     system.display(st, writer);
                 }
                 else if (Objects.equals(message, "EXIT")) {
-                    system.export(st);
-//                    in.close();
-//                    out.close();
-//                    reader.close();
-//                    writer.close();
-//                    clientsocket.close();
-//                    break;
+                    in.close();
+                    out.close();
+                    reader.close();
+                    writer.close();
+                    clientsocket.close();
+                    break;
                 }
                 else {
                     writer.println("Invalid message: "+message);
@@ -159,6 +145,9 @@ class Thread_handle extends Thread{
 
 
 public class SerVote {
+
+    static Connection db;
+
     public static void main(String[] args) throws IOException {
 
         Connection db = null;
@@ -170,13 +159,13 @@ public class SerVote {
         System.out.print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
 
         try {
-            db = DriverManager.getConnection("jdbc:postgresql://database-1.cv0oaegumj99.eu-north-1.rds.amazonaws.com:5432/postgres", account, password);
+            SerVote.db = DriverManager.getConnection("jdbc:postgresql://database-1.cv0oaegumj99.eu-north-1.rds.amazonaws.com:5432/postgres", account, password);
         }
         catch (SQLException e) {
             System.out.println(e.getMessage());
         }
 
-        Vote_system system = new Vote_system(db);
+        Vote_system system = new Vote_system(SerVote.db);
 
         System.out.println("Server host port was not specified. Please enter the desired port: ");
         int echoServPort = input.nextInt();
@@ -185,15 +174,43 @@ public class SerVote {
         try (ServerSocket servSock = new ServerSocket(echoServPort)) {
             System.out.println("Server started!");
             Executor service = Executors.newCachedThreadPool();
+            new Thread(SerVote::stop_checker).start();
             while (true) {
                 Socket clientSock = servSock.accept();
                 service.execute(new Thread_handle(clientSock, system));
             }
-
         }
         catch (IOException ex) {
             System.out.println("Server exception: " + ex.getMessage());
             ex.printStackTrace();
         }
     }
+
+    public static void stop_checker() {
+        Scanner sc = new Scanner(System.in);
+        String message;
+        while (true) {
+            message = sc.nextLine();
+            if (message.equals("STOP")) {
+                export(SerVote.db);
+                System.exit(0);
+            }
+        }
+    }
+
+    protected static void export(Connection db) {
+        try (FileWriter myWriter = new FileWriter("log.txt")){
+            Statement st = db.createStatement();
+            ResultSet rs = st.executeQuery("SELECT name, surname, votes FROM candidates ORDER BY surname ASC");
+            int id = 1;
+            while (rs.next()) {
+                myWriter.write(id + ".\t" + rs.getString("name") + " " + rs.getString("surname") + "\t\t Score: " + rs.getString("votes") + "\n");
+                id++;
+            }
+        }
+        catch (Exception e){
+            System.out.println(e.getMessage());
+        }
+    }
 }
+
