@@ -120,7 +120,7 @@ class Thread_handle extends Thread{
                     writer.println(system.vote(st, message, batch, user_data, clientSocketIP));
                 }
 
-                else if (Objects.equals(message, "DISPLAY")) {
+                else if (Objects.equals(message, "INFO")) {
                     system.display(st, writer);
                 }
                 else if (Objects.equals(message, "EXIT")) {
