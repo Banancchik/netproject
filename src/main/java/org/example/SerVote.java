@@ -17,23 +17,17 @@ class Vote_system {
 
     protected Connection database;
 
-    protected synchronized String vote(Statement st, String message, String[] batch, String[] user_data, String client_ip) {
+    protected synchronized String vote(Statement st, int message, String[] batch, String[] user_data, String client_ip) {
         try {
-            System.out.println("query0");
             ResultSet rs = st.executeQuery("SELECT 1 FROM account WHERE (email = '"+ user_data[2] +"' AND ip = '" + client_ip + "' AND have_voted = true)");
-            System.out.println("query0end");
             if(rs.next()) {
-                return "Error, you already voted";
+                return "Error, you have already voted";
             }
 
-            String candidate = batch[Integer.parseInt(message) - 1];
+            String candidate = batch[message - 1];
             String[] name_surname = candidate.split(" ");
-            System.out.println("query1");
             st.executeUpdate("UPDATE candidates SET votes = candidates.votes + 1 WHERE surname = '" + name_surname[1] + "'");
-            System.out.println("query1end");
-            System.out.println("query2");
             st.executeUpdate("UPDATE account SET have_voted = 'true' WHERE (email = '"+ user_data[2] +"' AND ip = '" + client_ip + "')");
-            System.out.println("query2end");
             return "Success";
         }
         catch (Exception e) {
@@ -45,7 +39,7 @@ class Vote_system {
         try {
             ResultSet rs = st.executeQuery("SELECT * FROM candidates WHERE name = 'John' ORDER BY surname ASC");
 
-            String[] batch = new String[6];
+            String[] batch = new String[101];
 
             int i = 0;
             while (rs.next()) {
@@ -116,9 +110,16 @@ class Thread_handle extends Thread{
             while (true) {
                 message = reader.readLine();
 
-                if (message.matches("[123456]")) { //TODO Голосовать используя комманду VOTE и цифру
-                    writer.println(system.vote(st, message, batch, user_data, clientSocketIP));
-                }
+                if (message.startsWith("VOTE")) {
+                    int vote_no = Integer.parseInt(message.replaceAll("[^\\d]", ""));
+                    System.out.println(vote_no);
+                    if (vote_no > 100 || vote_no < 1) {
+                        writer.println("Invalid vote number");
+                    }
+                    else {
+                        writer.println(system.vote(st, vote_no, batch, user_data, clientSocketIP));
+                    }
+                    }
 
                 else if (Objects.equals(message, "INFO")) {
                     system.display(st, writer);
@@ -131,9 +132,6 @@ class Thread_handle extends Thread{
                     clientsocket.close();
                     break;
                 }
-//                else {
-//                    writer.println(message);
-//                }
             }
         }
         catch (IOException e) {
@@ -146,7 +144,7 @@ class Thread_handle extends Thread{
 }
 
 
-public class Main {
+public class SerVote {
     public static void main(String[] args) throws IOException {
 
         Connection db = null;

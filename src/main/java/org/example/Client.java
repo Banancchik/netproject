@@ -20,17 +20,17 @@ class Client {
             String message = input.nextLine();
             writer.println(message);
 
-            for (int i = 0; i < 6; i++) {
+            for (int i = 0; i < 100; i++) {
                 System.out.println(reader.readLine());
             }
 
             while (true){
                 System.out.println("Message for the server: ");
-                message = input.nextLine(); //TODO просили голосовать используя комманду VOTE и цифру
+                message = input.nextLine();
                 writer.println(message);
 
                 if (Objects.equals(message, "INFO")){
-                    for (int i = 0; i < 6; i++) {
+                    for (int i = 0; i < 100; i++) {
                         System.out.println(reader.readLine());
                     }
                 }
