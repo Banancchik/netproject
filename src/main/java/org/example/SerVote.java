@@ -31,7 +31,7 @@ class Vote_system {
             return "Success";
         }
         catch (Exception e) {
-            return e.getMessage();
+            return "Error." + e.getMessage();
         }
     }
 
@@ -43,8 +43,11 @@ class Vote_system {
 
             int i = 0;
             while (rs.next()) {
-                batch[i] = rs.getString("name")+" "+rs.getString("surname") + "   Score: " + rs.getString("votes");
-                writer.println(batch[i]);
+                String namesurname = rs.getString("name")+" "+rs.getString("surname");
+                String score = "   Score: " + rs.getString("votes");
+                String format = ("%-20s%s%n");
+                batch[i] = namesurname + score;
+                writer.printf(format, (i+1) + ". " + namesurname, score);
                 i++;
             }
             return batch;
@@ -55,21 +58,21 @@ class Vote_system {
         }
     }
 
-    protected synchronized void login(Statement st, String[] user_data, String client_ip) {
+    protected synchronized String login(Statement st, String[] user_data, String client_ip) {
         try {
             ResultSet rs = st.executeQuery("SELECT 1 FROM account WHERE ip = '" + client_ip + "'");
             if (rs.next()) {
                 rs = st.executeQuery("SELECT 1 FROM account WHERE email = '" + user_data[2] + "'");
                 if (rs.next()) {
-                    return;
+                    return "Login successful. Welcome back, " + user_data[0] + " " + user_data[1];
                 }
             }
 
-            st.executeQuery("INSERT INTO account(name, surname, email, ip) VALUES('" + user_data[0] + "','" + user_data[1] + "','" + user_data[2] + "','" + client_ip + "')");
-            System.out.println("Success");
+            st.executeUpdate("INSERT INTO account(name, surname, email, ip) VALUES('" + user_data[0] + "','" + user_data[1] + "','" + user_data[2] + "','" + client_ip + "')");
+            return "Login successful.";
         }
         catch (Exception e) {
-            System.out.println(e.getMessage());
+            return "Error. " + e.getMessage();
         }
     }
 
@@ -101,7 +104,8 @@ class Thread_handle extends Thread{
             writer.println("Enter your name, surname and e-mail:");
             String message = reader.readLine();
             String[] user_data = message.split(" ");
-            system.login(st, user_data, clientSocketIP);
+            writer.println(system.login(st, user_data, clientSocketIP));
+
 
 
 
@@ -112,7 +116,6 @@ class Thread_handle extends Thread{
 
                 if (message.startsWith("VOTE")) {
                     int vote_no = Integer.parseInt(message.replaceAll("[^\\d]", ""));
-                    System.out.println(vote_no);
                     if (vote_no > 100 || vote_no < 1) {
                         writer.println("Invalid vote number");
                     }
@@ -158,7 +161,6 @@ public class SerVote {
 
         try {
             db = DriverManager.getConnection("jdbc:postgresql://database-1.cv0oaegumj99.eu-north-1.rds.amazonaws.com:5432/postgres", account, password);
-            Statement st = db.createStatement();
         }
         catch (SQLException e) {
             System.out.println(e.getMessage());

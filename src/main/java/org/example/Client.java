@@ -20,6 +20,8 @@ class Client {
             String message = input.nextLine();
             writer.println(message);
 
+            System.out.println(reader.readLine());
+
             for (int i = 0; i < 100; i++) {
                 System.out.println(reader.readLine());
             }
