@@ -103,7 +103,7 @@ class Thread_handle extends Thread{
             writer.println(system.login(st, user_data, clientSocketIP));
 
 
-            String[] batch = system.display(st, writer);//TODO Список просили сохранять в list.txt локально на устройстве, у нас есть база, но можно и локально на всякий
+            String[] batch = system.display(st, writer);
 
             while (true) {
                 message = reader.readLine();
