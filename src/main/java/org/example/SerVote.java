@@ -127,6 +127,7 @@ class Thread_handle extends Thread{
                     reader.close();
                     writer.close();
                     clientsocket.close();
+                    System.out.println("Client disconnected.");
                     break;
                 }
                 else {
