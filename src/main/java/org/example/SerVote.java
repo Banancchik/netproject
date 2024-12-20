@@ -97,7 +97,7 @@ class Thread_handle extends Thread{
             BufferedReader reader = new BufferedReader(new InputStreamReader(in));
             PrintWriter writer = new PrintWriter(out, true);
 
-            writer.println("Enter your name, surname and e-mail:");
+            //writer.println("Enter your name, surname and e-mail:");
             String message = reader.readLine();
             String[] user_data = message.split(" ");
             writer.println(system.login(st, user_data, clientSocketIP));
